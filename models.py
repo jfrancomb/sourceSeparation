@@ -71,7 +71,7 @@ class SpectralConvNet(tf.keras.Model):
         test_accuracy(labels, predictions)
 
 
-# Time Domain Method
+# Time Domain Method/ waveform 
 class CausalAtrousConvolution1D(Conv1D):
     def __init__(self, filters, kernel_size, init='glorot_uniform', activation=None,
                  padding='valid', strides=1, dilation_rate=1, bias_regularizer=None,

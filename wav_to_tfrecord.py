@@ -5,6 +5,7 @@ import pandas as pd
 import os
 import shutil
 import librosa
+import jams
 
 # The following functions can be used to convert a value to a type compatible
 # with tf.Example.
@@ -21,6 +22,26 @@ def _float_feature(value):
 def _int64_feature(value):
   """Returns an int64_list from a bool / enum / int / uint."""
   return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
+
+def format_records(wav_dir = "datasets/scenes/", output_dir = "datasets/scenes/tfRecords"):
+  """converts the generated soundscapes to tensorflow records"""
+  files = os.listdir(wav_dir)
+  # just get file names without extensions
+  fnames = [f.split('.')[0] for f in files]
+  for fname in fnames:
+    jams_file = os.path.join(wav_dir, fname + ".jams")
+    wav_file = os.path.join(wav_dir, fname + ".wav")
+    jam = jams.load(jams_file)
+    with open(jams_file, "r") as read_file:
+      js = json.load(read_file)
+    sound_annotations = js['annotations'][0]
+    y = get_sound_response(wav_file, start_time, duration, mix_duration, sr)
+
+def get_sound_response(wav_file, start_time, duration, mix_duration):
+  np.array()
+    
+  print(wav_files)
+  return 0
 
 def format_esc50_records(wav_dir, metadata_file = 'datasets/ESC-50-master/meta/esc50.csv', output_dir = 'datasets/ESC-50-master/', copy = False):
     """reads all wav files in a directory, converts to tf examples and writes them to a single tfrecord file"""
@@ -95,7 +116,8 @@ def format_esc50_records(wav_dir, metadata_file = 'datasets/ESC-50-master/meta/e
             note_id += 1
             
 def main():
-    format_esc50_records(wav_dir='datasets/ESC-50-master/audio/',  output_dir= 'datasets/ESC-50-master')
+  #format_esc50_records(wav_dir='datasets/ESC-50-master/audio/',  output_dir= 'datasets/ESC-50-master')
+  format_records()
 
 if __name__ == "__main__":
-    main()
+  main()
