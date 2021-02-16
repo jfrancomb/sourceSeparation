@@ -1,79 +1,8 @@
 import os
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import librosa
-import cv2
 import shutil
 import scaper
-
-def scale_minmax(X, min=0.0, max=1.0):
-    """takes an image as np array and scales it between provided min and max"""
-    X_std = (X - X.min()) / (X.max() - X.min())
-    X_scaled = X_std * (max - min) + min
-    return X_scaled
-
-def alpha_blend(a, b, alpha):
-    """returns weighted blend of images a and b based on the provided weight"""
-    return a * alpha + (1-alpha) * b
-
-def gen_noise(shape):
-    """returns gaussian noise with given shape"""
-    return np.random.standard_normal(shape)
-
-def get_cqt_spectrogram(y, sr = 22050, fmin = 32.7, n_bins = 72, hop_length = 512):
-    """generates a constant q transformed spectrogram"""
-    C = librosa.cqt(y, sr=sr, fmin=fmin, n_bins=n_bins, hop_length=hop_length)
-    logC = librosa.amplitude_to_db(np.abs(C))
-    img = scale_minmax(logC, 0, 255).astype(np.uint8)
-    return img
-
-def get_chroma_cqt(y, sr = 22050):
-    """generates a constant q chromagram"""
-    chroma_cq = librosa.feature.chroma_cqt(y=y, sr=sr)
-    return chroma_cq
-
-def generate_spectrogram_directory(wav_dir, spec_dir, sr = 22050, fmin = 32.7, n_bins = 72, hop_length = 512):
-    """takes as input the path to a directory containing the wav dataset, converts all files to spectrograms and writes them to the spec_dir""" 
-    wav_files = os.listdir(wav_dir)
-    wav_files = [wav_dir + f if '.wav' in f else None for f in wav_files]
-    for wav in wav_files:
-        # read wav
-        y, sr = librosa.load(wav,  sr = sr)
-        # get and plot spectrogram
-        img = get_cqt_spectrogram(y, sr, fmin = fmin, n_bins = n_bins, hop_length = hop_length)
-        # save  image
-        png = wav.replace('wav', 'png').replace('audio','img')
-        cv2.imwrite(png, img)
-
-def get_esc50_classification_splits(img_dir = 'ESC-50-master/img/', class_labels = 'ESC-50-master/meta/esc50.csv', train_folds = [1,2,3,4]):
-    """Takes specgrogram image input directory and retrieves ESC50 train and test sets based on specified folds in the class_labels csv file"""
-    label_df = pd.read_csv(class_labels)
-    img_files = os.listdir(img_dir)
-    train_img = []
-    train_label = []
-    test_img = []
-    test_label = []
-    class_map = {}
-    for img_file in img_files:
-        img_path = img_dir + img_file
-        img = cv2.imread(img_path)
-        #get fold info
-        img_row = label_df[label_df['filename'] == img_file.replace('png','wav')]
-        target = img_row.iloc[0]['target']
-        if int(img_row['fold']) in train_folds:
-            train_img.append(img)
-            train_label.append(target)
-        else:
-            test_img.append(img)
-            test_label.append(target)
-        if target not in class_map.keys():
-            class_map[target] = img_row.iloc[0]['category']
-    train_img = np.array(train_img)
-    train_label = np.array(train_label)
-    test_img = np.array(test_img)
-    test_label = np.array(test_label)
-    return train_img, train_label, test_img, test_label, class_map
 
 def create_scaper_directory(input_dir = 'datasets/ESC-50-master/audio',
                             output_dir = 'datasets/scaper/', 
@@ -150,6 +79,20 @@ def scape_sounds(out_dir = 'datasets/scenes/',
                     no_audio=False,
                     txt_path=txtfile)
     return 0
+
+# def format_records(wav_dir = "datasets/scenes/", output_dir = "datasets/scenes/tfRecords"):
+#   """converts the generated soundscapes to tensorflow records"""
+#   files = os.listdir(wav_dir)
+#   # just get file names without extensions
+#   fnames = [f.split('.')[0] for f in files]
+#   for fname in fnames:
+#     jams_file = os.path.join(wav_dir, fname + ".jams")
+#     wav_file = os.path.join(wav_dir, fname + ".wav")
+#     jam = jams.load(jams_file)
+#     with open(jams_file, "r") as read_file:
+#       js = json.load(read_file)
+#     sound_annotations = js['annotations'][0]
+#     y = get_sound_response(wav_file, start_time, duration, mix_duration, sr)
 
 if __name__ ==  "__main__":
     create_scaper_directory()
